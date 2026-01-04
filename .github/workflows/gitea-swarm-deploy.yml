@@ -10,14 +10,27 @@ jobs:
     runs-on: self-hosted
     environment: production
 
-    env:
-      SMTP_USER: ${{ secrets.SMTP_USER }}
-      SMTP_PASS: ${{ secrets.SMTP_PASS }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create .env file from GitHub Secrets
+        run: |
+          cat <<EOF > .env
+          USER_UID=1000
+          USER_GID=1000
+
+          GITEA__mailer__ENABLED=true
+          GITEA__mailer__PROTOCOL=smtps
+          GITEA__mailer__SMTP_ADDR=smtp.gmail.com
+          GITEA__mailer__SMTP_PORT=465
+
+          GITEA__mailer__USER=${{ secrets.GITEA_SMTP_USER }}
+          GITEA__mailer__PASSWD=${{ secrets.GITEA_SMTP_PASS }}
+          GITEA__mailer__FROM=${{ secrets.GITEA_SMTP_FROM }}
+          EOF
+
       - name: Deploy Gitea Swarm service
         run: |
           docker stack deploy -c docker-compose.yml gitea
+
